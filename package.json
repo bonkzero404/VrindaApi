@@ -1,0 +1,52 @@
+{
+  "name": "vrindaapi",
+  "version": "1.0.0",
+  "description": "Service Provider Switch",
+  "main": "server.js",
+  "scripts": {
+    "start": "npm run build && node build/server.js",
+    "start:dev": "NODE_ENV=development nodemon src/server.js",
+    "build": "NODE_ENV=production webpack -p --profile --display-modules --optimize-minimize",
+    "build:dev": "webpack -d",
+    "build:dev:watch": "webpack -d --watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "SmartHome"
+  ],
+  "author": "Janitra Panji",
+  "license": "MIT",
+  "dependencies": {
+    "async": "^2.6.0",
+    "bcrypt": "^1.0.3",
+    "body-parser": "^1.18.2",
+    "compression": "^1.7.1",
+    "cookie-parser": "^1.4.3",
+    "cors": "^2.8.4",
+    "crypto": "^1.0.1",
+    "express": "^4.16.2",
+    "helmet": "^3.9.0",
+    "jsonwebtoken": "^8.1.0",
+    "method-override": "^2.3.10",
+    "mongoose": "^4.13.7",
+    "mosca": "^2.7.0",
+    "mqtt": "^2.15.0",
+    "validator": "^9.2.0",
+    "winston": "^3.0.0-rc1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.2",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-register": "^6.26.0",
+    "eslint": "^4.13.1",
+    "eslint-config-airbnb": "^16.1.0",
+    "eslint-plugin-import": "^2.8.0",
+    "eslint-plugin-jsx-a11y": "^6.0.3",
+    "eslint-plugin-react": "^7.5.1",
+    "nodemon": "^1.14.3",
+    "webpack": "^3.10.0",
+    "webpack-node-externals": "^1.6.0"
+  }
+}
