@@ -22,11 +22,20 @@ npm install
 ## Usage
 
 ```
-Start Production : npm run build && node build/server.js
-Start Development : NODE_ENV=development nodemon src/server.js
-Build Production : NODE_ENV=production webpack -p --profile --display-modules --optimize-minimize
-Build Development : webpack -d
-Watcher : webpack -d --watch
+[Start Production]
+npm run build && node build/server.js
+
+[Start Development]
+NODE_ENV=development nodemon src/server.js
+
+[Build Production]
+NODE_ENV=production webpack -p --profile --display-modules --optimize-minimize
+
+[Build Development]
+webpack -d
+
+[Watcher]
+webpack -d --watch
 ```
 
 ## Contribute
