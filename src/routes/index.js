@@ -11,8 +11,8 @@ router.get('/', (req, res) => {
     valid: true,
     messages: ['Api Info'],
     data: {
-      apiName: 'blackbeard',
-      apiDescription: 'RestFul Service BlackBeard',
+      apiName: 'VrindaApi',
+      apiDescription: 'RestFul Service for IoT Platform',
       apiVersion: '1.0.0'
     }
   });

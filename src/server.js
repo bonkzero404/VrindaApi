@@ -10,7 +10,7 @@ import helmet from 'helmet';
 import mongoose from 'mongoose';
 import routes from './routes';
 import defaultuser from './utils/defaultuser';
-import { Mqttsv } from './mqtt-server';
+import Mqttsv from './mqtt-server';
 import { basic } from './config';
 import logger from './utils/logger';
 

@@ -4,8 +4,7 @@ import mosca from 'mosca';
 // Basic Configuration
 ///////////////////////
 export const basic = {
-  // mongoUrl: 'mongodb://janitrapanji:vrinda29@ds161426.mlab.com:61426/blackbeard',
-  mongoUrl: 'mongodb://localhost:27017/blackbeard',
+  mongoUrl: 'mongodb://localhost:27017/vrindadb',
   apiServer: {
     port: 8080,
     jwtSecret: 'sangattahasia',
