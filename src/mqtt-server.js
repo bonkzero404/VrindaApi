@@ -1,5 +1,5 @@
 import mosca from 'mosca';
-import Authorizer from 'mosca/lib/authorizer';
+// import Authorizer from 'mosca/lib/authorizer';
 import bcrypt from 'bcrypt';
 import Auth from './models/auth';
 import Device from './models/device';
@@ -7,7 +7,7 @@ import { moscaSettings } from './config';
 import logger from './utils/logger';
 
 const server = new mosca.Server(moscaSettings);
-const authorizer = new Authorizer();
+// const authorizer = new Authorizer();
 
 // In this case the client authorized as alice can publish to /users/alice taking
 // the username from the topic and verifing it is the same of the authorized user
@@ -29,7 +29,7 @@ const setup = () => {
   server.authenticate = authenticate;
   server.authorizeSubscribe = authorizeSubscribe;
   server.authorizePublish = authorizePublish;
-  logger.info('Mosca server is up and running')
+  logger.info('Mosca server is up and running');
 };
 
 const Mqttsv = () => {
@@ -42,7 +42,7 @@ const Mqttsv = () => {
   server.on('published', (packet, client) => {
     logger.info('Published', packet, client);
 
-    const topic = packet.topic;
+    const { topic } = packet.topic;
 
     if (topic.indexOf('ESP:INFO') !== -1) {
       const message = JSON.parse(packet.payload.toString());
@@ -54,48 +54,43 @@ const Mqttsv = () => {
       }).exec((err, doc) => {
         if (err) {
           logger.info(err);
-        } else {
-          if (doc === null) {
-            logger.info('Pengguna belum teregistrasi');
-          }
-          else {
-            if (doc.status === 'active') {
-              // Save Device
-              Device.findOne({
+        } else if (doc === null) {
+          logger.info('Pengguna belum teregistrasi');
+        } else if (doc.status === 'active') {
+          // Save Device
+          Device.findOne({
+            deviceid: message.id,
+            user: doc._id,
+          }).exec((errD, docD) => {
+            if (docD === null) {
+              const dv = new Device({
                 deviceid: message.id,
-                user: doc._id
-              }).exec((errD, docD) => {
-                if (docD === null) {
-                  const dv = new Device({
-                    deviceid: message.id,
-                    devicelabel: `Label-${message.id}`,
-                    user: doc._id,
-                  });
+                devicelabel: `Label-${message.id}`,
+                user: doc._id,
+              });
 
-                  dv.save((errDevice) => {
-                    if (errDevice) {
-                      if (errDevice.code) {
-                        // Error code if record is available
-                        if (errDevice.code === 11000) {
-                          logger.info('Device sudah terdaftar');
-                          updateOnlineStat(message.id, doc._id, 1);
-                        }
-                      } else {
-                        logger.info(errDevice);
-                      }
-                    } else {
-                      logger.info('Device berhasil didaftarkan');
+              dv.save((errDevice) => {
+                if (errDevice) {
+                  if (errDevice.code) {
+                    // Error code if record is available
+                    if (errDevice.code === 11000) {
+                      logger.info('Device sudah terdaftar');
+                      updateOnlineStat(message.id, doc._id, 1);
                     }
-                  });
+                  } else {
+                    logger.info(errDevice);
+                  }
                 } else {
-                  logger.info(`Perangkat dengan ID ${message.id} dan pengguna ${doc._id} sudah terdaftar`);
-                  updateOnlineStat(message.id, doc._id, 1);
+                  logger.info('Device berhasil didaftarkan');
                 }
               });
             } else {
-              logger.info('Akun sudah di aktifasi');
+              logger.info(`Perangkat dengan ID ${message.id} dan pengguna ${doc._id} sudah terdaftar`);
+              updateOnlineStat(message.id, doc._id, 1);
             }
-          }
+          });
+        } else {
+          logger.info('Akun sudah di aktifasi');
         }
       });
     }
@@ -103,12 +98,12 @@ const Mqttsv = () => {
 
   // fired when a client subscribes to a topic
   server.on('subscribed', (topic, client) => {
-    logger.info('subscribed : ', topic);
+    logger.info('subscribed : ', topic, client);
   });
 
   // when client return puback,
   server.on('delivered', (packet, client) => {
-    logger.info('Delivered', packet);
+    logger.info('Delivered', packet, client);
   });
 
   // fired when a client is disconnecting
@@ -121,20 +116,18 @@ const Mqttsv = () => {
     logger.info('clientDisconnected : ', client.id);
     updateOfflineStat(client.id, 1, 0);
   });
-}
+};
 
-Mqttsv.prototype.getServer = () => {
-  return server;
-}
+Mqttsv.prototype.getServer = () => (server);
 
 const updateOnlineStat = (deviceId, user, stat) => {
   Device.update({
     deviceid: deviceId,
-    user: user
+    user,
   }, {
     $set: {
-      online: stat
-    }
+      online: stat,
+    },
   }, (err, doc) => {
     if (err) logger.info(err);
     let ol = 'Online';
@@ -143,18 +136,18 @@ const updateOnlineStat = (deviceId, user, stat) => {
     else ol = 'Offline';
 
     logger.info(`${deviceId} Status ${ol}`);
-
+    logger.info(`Document ${doc}`);
   });
-}
+};
 
 const updateOfflineStat = (deviceId, st, stat) => {
   Device.update({
     deviceid: deviceId,
-    online: st
+    online: st,
   }, {
     $set: {
-      online: stat
-    }
+      online: stat,
+    },
   }, (err, doc) => {
     if (err) logger.info(err);
     let ol = 'Online';
@@ -163,46 +156,41 @@ const updateOfflineStat = (deviceId, st, stat) => {
     else ol = 'Offline';
 
     logger.info(`${deviceId} Status ${ol}`);
-
+    logger.info(`Document ${doc}`);
   });
-}
+};
 
 const authenticate = (client, username, password, callback) => {
   Auth.findOne({
-    username: username
+    username,
   }).populate('user').exec((err, doc) => {
     if (err) {
       logger.info(err);
-      return callback(null, false);
-    } else {
-      if (doc === null) {
-        logger.info('Tidak ditemukan pengguna dalam database');
-        return callback(null, false);
-      }
-      else {
-        if (doc.status === 'active') {
-          try {
-            bcrypt.compare(password.toString(), doc.password, (errBcrypt, resBcrypt) => {
-              if (errBcrypt) {
-                logger.info(errBcrypt);
-                return callback(null, false);
-              } else if (resBcrypt === true) {
-                logger.info('MQTT Autentikasi valid');
-                return callback(null, true);
-              } else {
-                logger.info('MQTT Password salah');
-                return callback(null, false);
-              }
-            });
-          } catch (e) {
-            logger.info('Terjadi kesalahan dalam komparasi password');
-            return callback(null, false);
+      callback(null, false);
+    } else if (doc === null) {
+      logger.info('Tidak ditemukan pengguna dalam database');
+      callback(null, false);
+    } else if (doc.status === 'active') {
+      try {
+        bcrypt.compare(password.toString(), doc.password, (errBcrypt, resBcrypt) => {
+          if (errBcrypt) {
+            logger.info(errBcrypt);
+            callback(null, false);
+          } else if (resBcrypt === true) {
+            logger.info('MQTT Autentikasi valid');
+            callback(null, true);
+          } else {
+            logger.info('MQTT Password salah');
+            callback(null, false);
           }
-        } else {
-          logger.info('Pengguna belum diaktifkan');
-          return callback(null, false);
-        }
+        });
+      } catch (e) {
+        logger.info('Terjadi kesalahan dalam komparasi password');
+        callback(null, false);
       }
+    } else {
+      logger.info('Pengguna belum diaktifkan');
+      callback(null, false);
     }
   });
 };

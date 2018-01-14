@@ -13,8 +13,8 @@ router.get('/', (req, res) => {
     data: {
       apiName: 'VrindaApi',
       apiDescription: 'RestFul Service for IoT Platform',
-      apiVersion: '1.0.0'
-    }
+      apiVersion: '1.0.0',
+    },
   });
 });
 

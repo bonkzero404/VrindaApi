@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const DeviceSchema = new mongoose.Schema({
   deviceid: {
     type: String,
-    required: true
+    required: true,
   },
   devicelabel: {
     type: String,
@@ -12,17 +12,17 @@ const DeviceSchema = new mongoose.Schema({
     type: Number,
     enum: [0, 1],
     default: 1,
-    required: true
+    required: true,
   },
   user: {
-    type: mongoose.Schema.Types.ObjectId, 
-		ref: 'Auth',
-		required: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Auth',
+    required: true,
   },
   dateCreated: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 export default mongoose.model('Devices', DeviceSchema);

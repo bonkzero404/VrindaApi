@@ -4,37 +4,37 @@ const AuthSchema = new mongoose.Schema({
   username: {
     type: String,
     unique: true,
-    required: true
+    required: true,
   },
   password: {
     type: String,
-    required: true
+    required: true,
   },
   plainPassword: {
     type: String,
-    required: true
+    required: true,
   },
   level: {
     type: String,
     enum: ['administrator', 'manager', 'user'],
     default: 'user',
-    required: true
+    required: true,
   },
   status: {
     type: String,
     enum: ['approval', 'active', 'suspend'],
-		default: ['approval'],
-		required: true
+    default: ['approval'],
+    required: true,
   },
-  user: { 
-		type: mongoose.Schema.Types.ObjectId, 
-		ref: 'Users',
-		required: true
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Users',
+    required: true,
   },
   dateCreated: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 export default mongoose.model('Auth', AuthSchema);

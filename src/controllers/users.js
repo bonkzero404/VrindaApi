@@ -2,13 +2,12 @@ import bcrypt from 'bcrypt';
 import async from 'async';
 import validator from 'validator';
 import jwt from 'jsonwebtoken';
-import {generatePassword} from '../utils/random';
+import { generatePassword } from '../utils/random';
 import Users from '../models/users';
 import Auth from '../models/auth';
-import {adduser} from '../mqtt-server';
-import {basic} from '../config';
+import { basic } from '../config';
 
-/////////////////////////////// Register User /////////////////////////////
+// Register User
 export const registerUser = (req, res) => {
   const request = req.body;
   const locals = {};
@@ -16,39 +15,58 @@ export const registerUser = (req, res) => {
 
   // Triger user if level user = user Can insert only level administrator or
   // manager
-  if (req.decoded.level === 'user') 
-    return res.json({valid: false, messages: ['Anda tidak mempunyai izin akses untuk menambahkan pengguna']});
-  
+  if (req.decoded.level === 'user') {
+    res.json({
+      valid: false,
+      messages: ['Anda tidak mempunyai izin akses untuk menambahkan pengguna'],
+    });
+  }
   // Generate random password
-  let genPassword = generatePassword({length: basic.apiServer.generatePasswordLength, numbers: true, uppercase: true, symbols: false});
+  const genPassword = generatePassword({
+    length: basic.apiServer.generatePasswordLength,
+    numbers: true,
+    uppercase: true,
+    symbols: false,
+  });
 
   // User ID Validator (empty, numeric)
-  if (request.userid === undefined || validator.isEmpty(request.userid)) 
+  if (request.userid === undefined || validator.isEmpty(request.userid)) {
     errors.push('User ID harus diisi');
-  if (!validator.isNumeric(request.userid)) 
+  }
+  if (!validator.isNumeric(request.userid)) {
     errors.push('User ID harus berupa angka');
-  if (!validator.isLength(request.userid, {min: 16})) 
+  }
+  if (!validator.isLength(request.userid, { min: 16 })) {
     errors.push('User ID minimal harus 16 digit');
-  
+  }
+
   // Fullname validator(empty)
-  if (request.fullname === undefined || validator.isEmpty(request.fullname)) 
+  if (request.fullname === undefined || validator.isEmpty(request.fullname)) {
     errors.push('Nama lengkap harus diisi');
-  
+  }
+
   // Phone validator (empty, numeric)
-  if (request.phone === undefined || validator.isEmpty(request.phone)) 
+  if (request.phone === undefined || validator.isEmpty(request.phone)) {
     errors.push('Nomor telepon harus diisi');
-  if (!validator.isNumeric(request.phone)) 
+  }
+  if (!validator.isNumeric(request.phone)) {
     errors.push('Nomor telepon harus berupa angka');
-  
+  }
+
   // Email validator (empty, email format)
-  if (request.email === undefined || validator.isEmpty(request.email)) 
+  if (request.email === undefined || validator.isEmpty(request.email)) {
     errors.push('Email harus diisi');
-  if (!validator.isEmail(request.email)) 
+  }
+  if (!validator.isEmail(request.email)) {
     errors.push('Format email salah, contoh: nama@domain.id');
-  
+  }
+
   // concatenate error validation
   if (errors.length > 0) {
-    return res.json({valid: false, messages: errors});
+    return res.json({
+      valid: false,
+      messages: errors,
+    });
   }
 
   async.series([
@@ -61,7 +79,7 @@ export const registerUser = (req, res) => {
         email: request.email,
         level: (req.decoded.level === 'administrator' && request.level !== undefined
           ? request.level
-          : 'user')
+          : 'user'),
       });
 
       return user.save((errUser) => {
@@ -69,10 +87,16 @@ export const registerUser = (req, res) => {
           if (errUser.code) {
             // Error code if record is available
             if (errUser.code === 11000) {
-              callback({valid: false, messages: ['Pengguna sudah terdaftar']});
+              callback({
+                valid: false,
+                messages: ['Pengguna sudah terdaftar'],
+              });
             }
           } else {
-            callback({valid: false, messages: errUser});
+            callback({
+              valid: false,
+              messages: errUser,
+            });
           }
         } else {
           locals.user = {
@@ -80,7 +104,7 @@ export const registerUser = (req, res) => {
             userid: user.userid,
             fullname: user.fullname,
             phone: user.phone,
-            email: user.email
+            email: user.email,
           };
           callback();
         }
@@ -91,7 +115,10 @@ export const registerUser = (req, res) => {
     (callback) => {
       bcrypt.genSalt(basic.apiServer.saltRounds, (errSalt, salt) => {
         if (errSalt) {
-          callback({valid: false, messages: ['Gagal generate salt']});
+          callback({
+            valid: false,
+            messages: ['Gagal generate salt'],
+          });
         } else {
           locals.salt = salt;
           callback();
@@ -103,7 +130,10 @@ export const registerUser = (req, res) => {
     (callback) => {
       bcrypt.hash(genPassword, locals.salt, (errHash, hash) => {
         if (errHash) {
-          callback({valid: false, messages: ['Gagal generate hash']});
+          callback({
+            valid: false,
+            messages: ['Gagal generate hash'],
+          });
         } else {
           locals.hash = hash;
           callback();
@@ -113,17 +143,28 @@ export const registerUser = (req, res) => {
 
     // Step 4 Save auth user to database
     (callback) => {
-      const auth = new Auth({username: locals.user.userid, password: locals.hash, plainPassword: genPassword, user: locals.user.id});
+      const auth = new Auth({
+        username: locals.user.userid,
+        password: locals.hash,
+        plainPassword: genPassword,
+        user: locals.user.id,
+      });
 
       return auth.save((errAuth) => {
         if (errAuth) {
           if (errAuth.code) {
             // Error code if record is available
             if (errAuth.code === 11000) {
-              callback({valid: false, messages: ['Pengguna sudah terdaftar dalam database']});
+              callback({
+                valid: false,
+                messages: ['Pengguna sudah terdaftar dalam database'],
+              });
             }
           } else {
-            callback({valid: false, messages: errAuth});
+            callback({
+              valid: false,
+              messages: errAuth,
+            });
           }
         } else {
           callback({
@@ -133,55 +174,62 @@ export const registerUser = (req, res) => {
               userid: locals.user.userid,
               fullname: locals.user.fullname,
               phone: locals.user.phone,
-              email: locals.user.email
-            }
+              email: locals.user.email,
+            },
           });
         }
       });
-    }
+    },
   ], (result) => {
     res.json(result);
   });
 };
 
-// ///////////////////////////// User Authentication
-// /////////////////////////////
+// User Authentication
 export const userAuth = (req, res) => {
   const user = req.body.username;
-  const password = req.body.password;
+  const { password } = req.body.password;
+
   const locals = {};
   const errors = [];
 
-  if (user === undefined || validator.isEmpty(user)) 
+  if (user === undefined || validator.isEmpty(user)) {
     errors.push('Username tidak boleh kosong');
-  if (password === undefined || validator.isEmpty(password)) 
+  }
+  if (password === undefined || validator.isEmpty(password)) {
     errors.push('Username tidak boleh kosong');
-  
+  }
+
   // concatenate error validation
   if (errors.length > 0) {
-    return res.json({valid: false, messages: errors});
+    res.json({
+      valid: false,
+      messages: errors,
+    });
   }
 
   async.series([
     // Step 1 Find user by username
     (callback) => {
       Auth
-        .findOne({username: user})
+        .findOne({ username: user })
         .populate('user')
         .exec((err, doc) => {
           if (err) {
-            callback({valid: false, messages: err});
+            callback({ valid: false, messages: err });
+          } else if (doc === null) {
+            callback({
+              valid: false,
+              messages: ['Nama pengguna belum terdaftar'],
+            });
+          } else if (doc.status === 'active') {
+            locals.doc = doc;
+            callback();
           } else {
-            if (doc === null) {
-              callback({valid: false, messages: ['Username not registered']});
-            } else {
-              if (doc.status === 'active') {
-                locals.doc = doc;
-                callback();
-              } else {
-                res.json({valid: false, messages: ['Akun belum di aktivasi, masih menunggu persetujuan admin']});
-              }
-            }
+            res.json({
+              valid: false,
+              messages: ['Akun belum di aktivasi, masih menunggu persetujuan admin'],
+            });
           }
         });
     },
@@ -191,15 +239,24 @@ export const userAuth = (req, res) => {
       try {
         bcrypt.compare(password, locals.doc.password, (errBcrypt, resBcrypt) => {
           if (errBcrypt) {
-            callback({valid: false, messages: errBcrypt});
+            callback({
+              valid: false,
+              messages: errBcrypt,
+            });
           } else if (resBcrypt === true) {
             callback();
           } else {
-            callback({valid: false, messages: ['User atau password tidak cocok']});
+            callback({
+              valid: false,
+              messages: ['User atau password tidak cocok'],
+            });
           }
         });
       } catch (e) {
-        callback({valid: false, messages: ['User atau password tidak cocok']});
+        callback({
+          valid: false,
+          messages: ['User atau password tidak cocok'],
+        });
       }
     },
 
@@ -207,10 +264,13 @@ export const userAuth = (req, res) => {
     (callback) => {
       jwt.sign(locals.doc.toObject(), basic.apiServer.jwtSecret, {
         algorithm: 'HS512',
-        expiresIn: '1d'
+        expiresIn: '1d',
       }, (err, token) => {
         if (err) {
-          callback({valid: false, messages: ['Gagal menggenerate token']});
+          callback({
+            valid: false,
+            messages: ['Gagal menggenerate token'],
+          });
         } else {
           callback({
             valid: true,
@@ -220,18 +280,18 @@ export const userAuth = (req, res) => {
               username: locals.doc.user.username,
               phone: locals.doc.user.phone,
               email: locals.doc.user.email,
-              accessToken: token
-            }
+              accessToken: token,
+            },
           });
         }
       });
-    }
+    },
   ], (result) => {
     res.json(result);
   });
 };
 
-/////////////////////////////// Updata Status /////////////////////////////
+// Updata Status
 export const updateStatusByUsername = (req, res) => {
   const request = req.body;
   const errors = []
@@ -239,39 +299,47 @@ export const updateStatusByUsername = (req, res) => {
 
   // Triger user if level user = user Can insert only level administrator or
   // manager
-  if (req.decoded.level === 'user') 
-    return res.json({valid: false, messages: ['Anda tidak mempunyai izin akses untuk menambahkan pengguna']});
-  
-  if (request.username === undefined || validator.isEmpty(request.username)) 
+  if (req.decoded.level === 'user') {
+    res.json({
+      valid: false,
+      messages: ['Anda tidak mempunyai izin akses untuk menambahkan pengguna'],
+    });
+  }
+
+  if (request.username === undefined || validator.isEmpty(request.username)) {
     errors.push('Username tidak boleh kosong');
-  if (request.status === undefined || validator.isEmpty(request.status)) 
+  }
+  if (request.status === undefined || validator.isEmpty(request.status)) {
     errors.push('Status tidak boleh kosong');
-  
+  }
+
   // concatenate error validation
   if (errors.length > 0) {
-    return res.json({valid: false, messages: errors});
+    return res.json({
+      valid: false,
+      messages: errors,
+    });
   }
 
   async.series([
     // Step 1 Find user by username
     (callback) => {
       Auth
-        .findOne({username: request.username})
+        .findOne({ username: request.username })
         .populate('user')
         .exec((err, doc) => {
           if (err) {
-            callback({valid: false, messages: err});
+            callback({ valid: false, messages: err });
+          } else if (doc === null) {
+            callback({ valid: false, messages: ['Pengguna belum teregistrasi'] });
+          } else if (doc.status === 'approval' || doc.status === 'suspend') {
+            locals.doc = doc;
+            callback();
           } else {
-            if (doc === null) {
-              callback({valid: false, messages: ['Pengguna belum teregistrasi']});
-            } else {
-              if (doc.status === 'approval' || doc.status === 'suspend') {
-                locals.doc = doc;
-                callback();
-              } else {
-                res.json({valid: false, messages: ['Akun sudah di aktifasi']});
-              }
-            }
+            res.json({
+              valid: false,
+              messages: ['Akun sudah di aktifasi'],
+            });
           }
         });
     },
@@ -279,14 +347,14 @@ export const updateStatusByUsername = (req, res) => {
     // Step 2 Update status by username
     (callback) => {
       Auth.update({
-        username: locals.doc.username
+        username: locals.doc.username,
       }, {
         $set: {
-          status: request.status
-        }
-      }, (err, doc) => {
+          status: request.status,
+        },
+      }, (err) => {
         if (err) {
-          callback({valid: false, messages: err});
+          callback({ valid: false, messages: err });
         } else {
           callback({
             valid: true,
@@ -295,19 +363,18 @@ export const updateStatusByUsername = (req, res) => {
               fullname: locals.doc.user.fullname,
               username: locals.doc.username,
               phone: locals.doc.user.phone,
-              email: locals.doc.user.email
-            }
+              email: locals.doc.user.email,
+            },
           });
         }
       });
-    }
+    },
   ], (result) => {
     res.json(result);
   });
-}
+};
 
-// ///////////////////////////// Load data from session
-// /////////////////////////////
+// Load data from session
 export const me = (req, res) => {
   res.json({
     valid: true,
@@ -322,7 +389,7 @@ export const me = (req, res) => {
       email: req.decoded.user.email,
       status: req.decoded.status,
       iat: req.decoded.iat,
-      exp: req.decoded.exp
-    }
+      exp: req.decoded.exp,
+    },
   });
-}
+};

@@ -1,17 +1,15 @@
 import bcrypt from 'bcrypt';
 import async from 'async';
-import jwt from 'jsonwebtoken';
 import Users from '../models/users';
 import Auth from '../models/auth';
 import logger from './logger';
 import { admin } from '../config';
 
 export default function() {
-
 	const saltRounds = 10;
 	const locals = {};
 
-  async.series([
+	async.series([
 		// Step 1
 		// Insert user admin first
 		(callback) => {
