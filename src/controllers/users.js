@@ -188,7 +188,7 @@ export const registerUser = (req, res) => {
 // User Authentication
 export const userAuth = (req, res) => {
   const user = req.body.username;
-  const { password } = req.body.password;
+  const { password } = req.body;
 
   const locals = {};
   const errors = [];
@@ -294,7 +294,7 @@ export const userAuth = (req, res) => {
 // Updata Status
 export const updateStatusByUsername = (req, res) => {
   const request = req.body;
-  const errors = []
+  const errors = [];
   const locals = {};
 
   // Triger user if level user = user Can insert only level administrator or

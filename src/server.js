@@ -1,3 +1,4 @@
+/** @module src/server */
 /* eslint no-console: "off" */
 import { Server } from 'http';
 import Express from 'express';
@@ -18,16 +19,18 @@ const app = new Express();
 const mqttsv = new Mqttsv();
 const server = new Server(app);
 
-// start the server
+/** Set port config. (ex: PORT=5000) */
 const port = process.env.PORT || basic.apiServer.port;
+
+/** set node environment production/development. (ex: NODE_ENV=production) */
 const env = process.env.NODE_ENV || 'production';
 
 mqttsv
   .getServer()
   .attachHttpServer(server);
 
-// MongoDB Connection
 mongoose.Promise = global.Promise;
+/** @function */
 mongoose.connect(basic.mongoUrl, { useMongoClient: true });
 mongoose
   .connection

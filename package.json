@@ -9,6 +9,7 @@
     "build": "NODE_ENV=production webpack -p --profile --display-modules --optimize-minimize",
     "build:dev": "webpack -d",
     "build:dev:watch": "webpack -d --watch",
+    "docs": "jsdoc -c docs.conf -d docs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
@@ -45,6 +46,8 @@
     "eslint-plugin-import": "^2.8.0",
     "eslint-plugin-jsx-a11y": "^6.0.3",
     "eslint-plugin-react": "^7.5.1",
+    "jsdoc": "^3.5.5",
+    "minami": "^1.2.3",
     "nodemon": "^1.14.3",
     "webpack": "^3.10.0",
     "webpack-node-externals": "^1.6.0"

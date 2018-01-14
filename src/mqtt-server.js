@@ -42,13 +42,14 @@ const Mqttsv = () => {
   server.on('published', (packet, client) => {
     logger.info('Published', packet, client);
 
-    const { topic } = packet.topic;
+    const { topic } = packet;
 
     if (topic.indexOf('ESP:INFO') !== -1) {
       const message = JSON.parse(packet.payload.toString());
       server.emit('getInfo', message);
     } else if (topic.indexOf('ESP:SERVER') !== -1) {
       const message = JSON.parse(packet.payload.toString());
+      logger.info('PAYLOAD', message);
       Auth.findOne({
         username: message.user,
       }).exec((err, doc) => {
@@ -163,12 +164,12 @@ const updateOfflineStat = (deviceId, st, stat) => {
 const authenticate = (client, username, password, callback) => {
   Auth.findOne({
     username,
-  }).populate('user').exec((err, doc) => {
+  }).exec((err, doc) => {
     if (err) {
       logger.info(err);
       callback(null, false);
     } else if (doc === null) {
-      logger.info('Tidak ditemukan pengguna dalam database');
+      logger.info(`Tidak ditemukan pengguna ${username} dalam database`);
       callback(null, false);
     } else if (doc.status === 'active') {
       try {
